@@ -48,7 +48,21 @@ private:
 	void LoadShaders(); 
 	void CreateGeometry();
 	void CreateMatrices();
+	void DrawShadows();
 	void MakePostProcessContent(D3D11_TEXTURE2D_DESC& tDesc, D3D11_RENDER_TARGET_VIEW_DESC& rtvDesc, D3D11_SHADER_RESOURCE_VIEW_DESC& srvDesc, ID3D11Texture2D*& ppTexture, ID3D11RenderTargetView*& ppRTV, ID3D11ShaderResourceView*& ppSRV);
+
+	//Shadows
+	void RenderShadowMap();
+
+	int shadowMapSize;
+	ID3D11DepthStencilView* shadowDSV;
+	ID3D11ShaderResourceView* shadowSRV;
+	ID3D11SamplerState* shadowSampler;
+	ID3D11RasterizerState* shadowRS;
+	SimpleVertexShader* shadowVS;
+	DirectX::XMFLOAT4X4 shadowView;
+	DirectX::XMFLOAT4X4 shadowProj;
+	//end shadows
 
 	// Wrappers for DirectX shaders to provide simplified functionality
 	SimpleVertexShader* vertexShader;

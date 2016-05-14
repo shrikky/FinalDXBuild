@@ -1,8 +1,12 @@
 
 Texture2D diffuseTexture	: register(t0);
+
+
+SamplerState trilinear	: register(s0);
+SamplerComparisonState shadowSampler : register(s1);
 Texture2D normalMap			:register(t1);
-SamplerState trillinear	: register(s0);
 Texture2D depthMap			:register(t2);
+Texture2D shadowMap		: register(t3);
 
 struct VertexToPixel
 {
@@ -11,6 +15,7 @@ struct VertexToPixel
 	float3 tangent		: TANGENT;
 	float3 worldPos     : TEXCOORD0;
 	float2 uv           : TEXCOORD1;
+	float4 posForShadow : TEXCOORD2;
 };
 struct DirectionalLight {
 	float4 AmbientColor;		// 4
@@ -82,12 +87,12 @@ float2 ParallaxMapping(float2 texCoords, float3 viewDir){
 	return texCoords - p;
 	float2 deltaTexCoords  = p/numLayers;
 	float2 currentTexCoords  = texCoords;
-	float currentDepthMapValue  = depthMap.Sample(trillinear, currentTexCoords).r;
+	float currentDepthMapValue  = depthMap.Sample(trilinear, currentTexCoords).r;
 
 	[unroll(100)]while(currentLayerDepth < currentDepthMapValue)
 	{
 		currentTexCoords -= deltaTexCoords;
-		currentDepthMapValue = depthMap.Sample(trillinear, currentTexCoords).r;
+		currentDepthMapValue = depthMap.Sample(trilinear, currentTexCoords).r;
 		currentLayerDepth += layerDepth;
 	}
 	// get texture coordinates before collision (reverse operations)
@@ -95,7 +100,7 @@ float2 ParallaxMapping(float2 texCoords, float3 viewDir){
 
 		// get depth after and before collision for linear interpolation
 		float afterDepth  = currentDepthMapValue - currentLayerDepth;
-		float beforeDepth =  depthMap.Sample(trillinear, prevTexCoords).r - currentLayerDepth + layerDepth;
+		float beforeDepth =  depthMap.Sample(trilinear, prevTexCoords).r - currentLayerDepth + layerDepth;
  
 		// interpolation of texture coordinates
 		float weight = afterDepth / (afterDepth - beforeDepth);
@@ -110,7 +115,7 @@ float3 CalculateNormalMap(inout float3 dirTowardsCamera, float3x3 TBN, inout flo
 	texCoords =  ParallaxMapping(texCoords,dirTowardsCamera);
 	   // discards a fragment when sampling outside default texture region (fixes border artifacts)
 
-	normalFromMap = normalMap.Sample(trillinear, texCoords).rgb;
+	normalFromMap = normalMap.Sample(trilinear, texCoords).rgb;
 	normalFromMap = normalFromMap * 2 - 1;	// Normal unpacking
 
 	return normalFromMap;
@@ -136,10 +141,25 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float dist = distance(pointLight.Position,input.worldPos);
 	float3 dirTowardsPointLight = normalize(pointLight.Position - input.worldPos);
 	
-	float3 surfaceColor = diffuseTexture.Sample(trillinear, texCoords).rgb;
+	// Calculate shadow amount
+
+	// Calculate this pixel's UV coordinate ON THE SHADOW MAP
+	float2 shadowUV = input.posForShadow.xy / input.posForShadow.w * 0.5f + 0.5f;
+
+	// Flip the Y value (since texture coords and clip space are opposite)
+	shadowUV.y = 1 - shadowUV.y;
+
+	// Calculate this pixel's actual depth from the light
+	float depthFromLight = input.posForShadow.z / input.posForShadow.w;
+
+	// Sample the shadow map and (automatically) compare the values
+	float shadowAmount = shadowMap.SampleCmpLevelZero(shadowSampler, shadowUV, depthFromLight);
+
+
+	float3 surfaceColor = diffuseTexture.Sample(trilinear, texCoords).rgb;
 
 	output =	pointLight.PointLightColor * CalculatePointLight(input.normal, dirTowardsPointLight, dist) +
 	 float4(SpecLight(input.normal, dirTowardsCamera, dirTowardsPointLight, specularLight.SpecularStrength).xxx, 0);
 	//+ CalculateDirectionalLight(input.normal, directionLight);
-	return float4(output, 1) * float4(surfaceColor,1) ;
+	return float4(output, 1) * float4(surfaceColor,1) * shadowAmount;;
 }

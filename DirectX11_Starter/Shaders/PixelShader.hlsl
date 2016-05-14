@@ -1,7 +1,10 @@
 
 Texture2D diffuseTexture	: register(t0);
 Texture2D normalMap			:register(t1);
+Texture2D shadowMap		: register(t3);
 SamplerState trillinear	: register(s0);
+SamplerComparisonState shadowSampler : register(s1);
+
 
 struct VertexToPixel
 {
@@ -10,6 +13,7 @@ struct VertexToPixel
 	float3 tangent		: TANGENT;
 	float3 worldPos     : TEXCOORD0;
 	float2 uv           : TEXCOORD1;
+	float4 posForShadow : TEXCOORD2;
 };
 
 struct DirectionalLight {
@@ -79,10 +83,25 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 dirTowardsCamera = normalize(cameraPosition - input.worldPos);
 	float4 surfaceColor = diffuseTexture.Sample(trillinear, input.uv);
 
+	// Calculate shadow amount
+
+	// Calculate this pixel's UV coordinate ON THE SHADOW MAP
+	float2 shadowUV = input.posForShadow.xy / input.posForShadow.w * 0.5f + 0.5f;
+
+	// Flip the Y value (since texture coords and clip space are opposite)
+	shadowUV.y = 1 - shadowUV.y;
+
+	// Calculate this pixel's actual depth from the light
+	float depthFromLight = input.posForShadow.z / input.posForShadow.w;
+
+	// Sample the shadow map and (automatically) compare the values
+	float shadowAmount = shadowMap.SampleCmpLevelZero(shadowSampler, shadowUV, depthFromLight);
+
+
 	output =
 		SpecLight(input.normal, dirTowardsCamera, dirTowardsPointLight, 1.0f) +
 		pointLight.PointLightColor * CalculatePointLight(input.normal, dirTowardsPointLight, dist) +	// PointLight
 		CalculateDirectionalLight(input.normal, directionLight );										// DirectionalLight
-	return float4(output, 0.4f) *surfaceColor + float4(SpecLight(input.normal, dirTowardsCamera, dirTowardsPointLight, specularLight.SpecularStrength).xxx,0.0f);
+	return float4(output, 0.6f) *surfaceColor + float4(SpecLight(input.normal, dirTowardsCamera, dirTowardsPointLight, specularLight.SpecularStrength).xxx,0.0f)* shadowAmount;
 
 }

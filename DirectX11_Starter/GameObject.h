@@ -22,6 +22,11 @@ public:
 	XMFLOAT4X4 GetWorldMatrix() {
 		return worldMatrix;
 	}
+	Mesh* getMesh() {
+		return gameObjectMesh;
+
+
+	}
 	XMFLOAT3 GetPosition() {
 		return position;
 	}
@@ -65,7 +70,7 @@ public:
 		 scale = _scale;
 		 SetWorldMatrix();
 	}
-
+	
 	void Move();
 	void SetWorldMatrix();
 	void MoveForward();
