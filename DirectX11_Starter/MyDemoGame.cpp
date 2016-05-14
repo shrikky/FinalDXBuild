@@ -273,7 +273,7 @@ bool MyDemoGame::Init()
 	device->CreateBlendState(&blendDesc, &blendState);
 
 	//Gui initialization
-	/*ImGui_ImplDX11_Init(hMainWnd, device, deviceContext);*/
+	ImGui_ImplDX11_Init(hMainWnd, device, deviceContext);
 
 	return true;
 }
@@ -567,6 +567,8 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 
 	myCamera->Update();
 	viewMatrix = myCamera->GetviewMatrix();
+
+
 }
 
 void MyDemoGame::DrawShadows() {
@@ -600,7 +602,15 @@ void MyDemoGame::DrawShadows() {
 // --------------------------------------------------------
 void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 {
-		
+	//Imgui code
+	ImGui_ImplDX11_NewFrame();
+
+	ImGui::Begin("Fancy GGP Game Engine");
+	ImGui::Text("GUI Frame Work");
+	if (ImGui::Button("Bloom"))
+		isBloom ^= 1;
+	ImGui::End();
+
 	if (isBloom)
 	{
 		// Set buffers in the input assembler
@@ -766,7 +776,9 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 			deviceContext->IASetVertexBuffers(0, 1, &nothing2, &stride, &offset);
 			deviceContext->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
 
-	
+			
+			//ImGui::Render();
+			
 			deviceContext->Draw(3, 0);
 	
 		
@@ -779,7 +791,8 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 			// Present the buffer
 			//  - Puts the image we're drawing into the window so the user can see it
 			//  - Do this exactly ONCE PER FRAME
-
+			
+			
 
 
 	}
@@ -846,11 +859,14 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		_skybox->skyBox->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 		_skybox->Draw(deviceContext);
 
-		deviceContext->RSSetState(0);
-		deviceContext->OMSetDepthStencilState(0, 0);
-
-
+		
+		
 	}
+	ImGui::Render();
+
+	deviceContext->RSSetState(0);
+	deviceContext->OMSetDepthStencilState(0, 0);
+	
 	HR(swapChain->Present(0, 0));
 }
 
