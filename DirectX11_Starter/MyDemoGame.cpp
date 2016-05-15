@@ -182,7 +182,7 @@ bool MyDemoGame::Init()
 																																									 //they should be put into materials
 	
 	//_waterCubeMaterial = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg");
-	_waterCubeMaterial = new Material(&vertexShader, &reflectionShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg", &nMapSRV, L"waternormal.jpg");
+	_waterCubeMaterial = new Material(&vertexShader, &reflectionShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg", &nMapSRV, L"waternormal1.png");
 
 	srvContainer.push_back(texSRV);
 	srvContainer.push_back(nMapSRV);
@@ -203,8 +203,8 @@ bool MyDemoGame::Init()
 	GameObject* cube3 = new GameObject(_cube, _helixMaterial);
 	gameObjects.push_back(cube3);
 	cube3->SetScale(XMFLOAT3(20, 1, 20));
-
 	cube3->SetYPosition(-3);
+
 	GameObject* building = new GameObject(_cube, _NormalMapMat);
 	gameObjects.push_back(building);
 	building->SetScale(XMFLOAT3(10, 20, 10));
@@ -222,7 +222,8 @@ bool MyDemoGame::Init()
 
 	cube->SetXPosition(-2);
 	helixGameObject->SetXPosition(2);
-	waterCubeGameObject->SetXPosition(-4);
+	waterCubeGameObject->SetPosition(XMFLOAT3(0.0f, -4.99f, 7.0f));
+	waterCubeGameObject->SetScale(XMFLOAT3(5.0f,5.0f,5.0f));
 
 
 	skyBoxCube = new GameObject(sbCube, skyBoxMaterial);
@@ -589,7 +590,7 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 	myCamera->Update();
 	viewMatrix = myCamera->GetviewMatrix();
 
-	waterCubeGameObject->SetRotationY(totalTime*0.5f);
+	//waterCubeGameObject->SetRotationY(totalTime*0.5f);
 
 
 }
