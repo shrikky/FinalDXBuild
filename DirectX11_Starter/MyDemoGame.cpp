@@ -99,10 +99,12 @@ MyDemoGame::~MyDemoGame()
 	delete brtPS;
 	delete mergePS;
 	delete shadowVS;
+	delete reflectionShader;
 
 	delete skyBoxMaterial;
 	delete _NormalMapMat;
 	delete _helixMaterial;
+	delete _waterCubeMaterial;
 
 	delete myCamera;
 	samplerState->Release();
@@ -124,6 +126,7 @@ MyDemoGame::~MyDemoGame()
 	delete skyBoxCube;
 
 	delete helixGameObject;
+	delete waterCubeGameObject;
 
 	std::vector<GameObject*>::iterator it;
 	for (it = gameObjects.begin(); it != gameObjects.end(); ++it) {
@@ -178,6 +181,9 @@ bool MyDemoGame::Init()
 	_helixMaterial = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &helixTexSRV, L"bricks2.jpg"); //if I can find 3 textures of differing qualities
 																																									 //they should be put into materials
 	
+	//_waterCubeMaterial = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg");
+	_waterCubeMaterial = new Material(&vertexShader, &reflectionShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg", &nMapSRV, L"waternormal.jpg");
+
 	srvContainer.push_back(texSRV);
 	srvContainer.push_back(nMapSRV);
 	srvContainer.push_back(dMapSRV);
@@ -186,6 +192,7 @@ bool MyDemoGame::Init()
 	srvContainer.push_back(bpSRV);
 	srvContainer.push_back(brtSRV);
 	srvContainer.push_back(helixTexSRV);
+	srvContainer.push_back(waterTexSRV);
 
 
 	GameObject* cube = new GameObject(_cube, _NormalMapMat);
@@ -205,11 +212,17 @@ bool MyDemoGame::Init()
 	building->SetZPosition(30);
 	building->SetRotation(XMFLOAT3(0, 0, 1.57f));
 
+	//water object
+	waterCubeGameObject = new GameObject(_waterCube, _waterCubeMaterial);
+
 	//blending object
 	helixGameObject = new GameObject(_helix, _helixMaterial);
 
+
+
 	cube->SetXPosition(-2);
 	helixGameObject->SetXPosition(2);
+	waterCubeGameObject->SetXPosition(-4);
 
 
 	skyBoxCube = new GameObject(sbCube, skyBoxMaterial);
@@ -223,6 +236,7 @@ bool MyDemoGame::Init()
 
 	pixelShader->SetData("directionLight", &directionLight, sizeof(directionLight));
 	normalMappingPS->SetData("directionLight", &directionLight, sizeof(directionLight));
+	reflectionShader->SetData("directionLight", &directionLight, sizeof(directionLight));
 
 	
 	//Point Light
@@ -231,6 +245,7 @@ bool MyDemoGame::Init()
 	pointLight.Strength = 1.0f;
 	pixelShader->SetData("pointLight", &pointLight, sizeof(pointLight));
 	normalMappingPS->SetData("pointLight", &pointLight, sizeof(pointLight));
+	reflectionShader->SetData("pointLight", &pointLight, sizeof(pointLight));
 
 
 	// Specular Light
@@ -238,6 +253,7 @@ bool MyDemoGame::Init()
 	specularLight.SpecularColor = XMFLOAT4(0, 0, 0, 1);
 	pixelShader->SetData("specularLight", &specularLight, sizeof(specularLight));
 	normalMappingPS->SetData("specularLight", &specularLight, sizeof(specularLight));
+	reflectionShader->SetData("specularLight", &specularLight, sizeof(specularLight));
 
 
 	
@@ -293,6 +309,9 @@ void MyDemoGame::LoadShaders()
 
 	normalMappingPS = new SimplePixelShader(device, deviceContext);
 	normalMappingPS->LoadShaderFile(L"NormalMapping.cso");
+
+	reflectionShader = new SimplePixelShader(device, deviceContext);
+	reflectionShader->LoadShaderFile(L"ReflectionShader.cso");
 
 
 	skyVS = new SimpleVertexShader(device, deviceContext);
@@ -455,6 +474,8 @@ void MyDemoGame::CreateGeometry()
 	meshes.push_back(_helix);
 	sbCube = new Mesh(device, "cube.obj");
 	meshes.push_back(sbCube);
+	_waterCube = new Mesh(device, "cube.obj");
+	meshes.push_back(_waterCube);
 }
 
 
@@ -568,6 +589,8 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 	myCamera->Update();
 	viewMatrix = myCamera->GetviewMatrix();
 
+	waterCubeGameObject->SetRotationY(totalTime*0.5f);
+
 
 }
 
@@ -629,7 +652,7 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 			1.0f,
 			0);
 		// Turn Off the blend state
-		float factors[4] = { 0,0,0,1 };
+		float factors[4] = { 1,1,1,1 };
 		deviceContext->OMSetBlendState(
 			NULL,
 			factors,
@@ -639,14 +662,6 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		//  - Do this ONCE PER FRAME
 		//  - At the beginning of DrawScene (before drawing *anything*)
 		deviceContext->ClearRenderTargetView(mRTV, color);
-
-		
-
-		// Turn on the blend state
-		deviceContext->OMSetBlendState(
-			blendState,
-			factors,
-			0xFFFFFFFF);
 
 		/*std::vector<GameObject*>::iterator it;
 		for (it = gameObjects.begin(); it != gameObjects.end(); ++it) {
@@ -674,20 +689,30 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 
 		pixelShader->SetShaderResourceView("shadowMap", 0);
 
+		// Turn on the blend state
+		deviceContext->OMSetBlendState(
+			blendState,
+			factors,
+			0xFFFFFFFF);
+
 		helixGameObject->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 		helixGameObject->Draw(deviceContext);
-		_skybox->skyBox->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
-		_skybox->Draw(deviceContext);
-
-		deviceContext->RSSetState(0);
-		deviceContext->OMSetDepthStencilState(0, 0);
-	
 
 		// Turn off the blend state
 		deviceContext->OMSetBlendState(
 			NULL,
 			factors,
 			0xFFFFFFFF);
+
+		reflectionShader->SetShaderResourceView("skyTexture", skySRV);
+		waterCubeGameObject->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
+		waterCubeGameObject->Draw(deviceContext);
+
+		_skybox->skyBox->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
+		_skybox->Draw(deviceContext);
+
+		deviceContext->RSSetState(0);
+		deviceContext->OMSetDepthStencilState(0, 0);
 
 	//----------------------------------------------------------EXTRACT BRIGHTNESS----------------------------------------//
 	
@@ -811,8 +836,7 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 			0);
 		// Turn Off the blend state
 
-		float factors[4] = { 0,0,0,1 };
-		//DrawShadows();
+		float factors[4] = { 1,1,1,1 };
 		deviceContext->OMSetBlendState(
 			blendState,
 			factors,
@@ -848,6 +872,11 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 
 		pixelShader->SetShaderResourceView("shadowMap", 0);
 
+		deviceContext->OMSetBlendState(
+			blendState,
+			factors,
+			0xFFFFFFFF);
+
 		helixGameObject->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 		helixGameObject->Draw(deviceContext);
 
@@ -855,6 +884,10 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 			NULL,
 			factors,
 			0xFFFFFFFF);
+
+		reflectionShader->SetShaderResourceView("skyTexture", skySRV);
+		waterCubeGameObject->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
+		waterCubeGameObject->Draw(deviceContext);
 
 		_skybox->skyBox->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 		_skybox->Draw(deviceContext);

@@ -161,5 +161,5 @@ float4 main(VertexToPixel input) : SV_TARGET
 	output =	pointLight.PointLightColor * CalculatePointLight(input.normal, dirTowardsPointLight, dist) +
 	 float4(SpecLight(input.normal, dirTowardsCamera, dirTowardsPointLight, specularLight.SpecularStrength).xxx, 0);
 	//+ CalculateDirectionalLight(input.normal, directionLight);
-	return float4(output, 1) * float4(surfaceColor,1) * shadowAmount;;
+	return float4(output, 1) * float4(surfaceColor,1) * shadowAmount;
 }

@@ -74,6 +74,7 @@ private:
 	SimplePixelShader* ppPS;
 	SimplePixelShader* mergePS;
 	SimplePixelShader* brtPS;
+	SimplePixelShader* reflectionShader;
 
 
 	// The matrices to go from model space to screen space
@@ -89,6 +90,7 @@ private:
 	// Meshes
 	Mesh* _cube;
 	Mesh* _cube2;
+	Mesh* _waterCube;
 	Mesh* _helix;
 	Mesh* sbCube;
 	std::vector<Mesh*> meshes;
@@ -96,6 +98,7 @@ private:
 	std::vector<GameObject*> gameObjects;
 	GameObject* helixGameObject;
 	GameObject* skyBoxCube;
+	GameObject* waterCubeGameObject;
 
 	ID3D11BlendState* blendState;
 
@@ -110,6 +113,8 @@ private:
 	ID3D11ShaderResourceView* mSRV = 0;
 	ID3D11ShaderResourceView* bpSRV = 0;
 	ID3D11ShaderResourceView* brtSRV = 0;
+	ID3D11ShaderResourceView* waterTexSRV = 0;
+
 
 	//Textures
 	ID3D11Texture2D* mTexture;
@@ -131,6 +136,7 @@ private:
 	Material* _helixMaterial;
 	Material* _NormalMapMat;
 	Material* skyBoxMaterial;
+	Material* _waterCubeMaterial;
 
 	//Descriptions
 	D3D11_TEXTURE2D_DESC mtDesc;
