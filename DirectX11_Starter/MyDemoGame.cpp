@@ -631,8 +631,10 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 
 	ImGui::Begin("Fancy GGP Game Engine");
 	ImGui::Text("GUI Frame Work");
-	if (ImGui::Button("Bloom"))
+	if (ImGui::Button("Toggle Bloom"))
 		isBloom ^= 1;
+	if (ImGui::Button("Toggle Blend"))
+		isBlend ^= 1;
 	ImGui::End();
 
 	if (isBloom)
@@ -652,12 +654,17 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 			D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 			1.0f,
 			0);
-		// Turn Off the blend state
+
 		float factors[4] = { 1,1,1,1 };
-		deviceContext->OMSetBlendState(
-			NULL,
-			factors,
-			0xFFFFFFFF);
+		if(isBlend)
+		{
+			// Turn Off the blend state
+			
+			deviceContext->OMSetBlendState(
+				NULL,
+				factors,
+				0xFFFFFFFF);
+		}
 
 		// Clear the render target and depth buffer (erases what's on the screen)
 		//  - Do this ONCE PER FRAME
@@ -690,20 +697,26 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 
 		pixelShader->SetShaderResourceView("shadowMap", 0);
 
-		// Turn on the blend state
-		deviceContext->OMSetBlendState(
-			blendState,
-			factors,
-			0xFFFFFFFF);
+		if (isBlend)
+		{
+			// Turn on the blend state
+			deviceContext->OMSetBlendState(
+				blendState,
+				factors,
+				0xFFFFFFFF);
+		}
 
 		helixGameObject->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 		helixGameObject->Draw(deviceContext);
 
-		// Turn off the blend state
-		deviceContext->OMSetBlendState(
-			NULL,
-			factors,
-			0xFFFFFFFF);
+		if (isBlend)
+		{
+			// Turn off the blend state
+			deviceContext->OMSetBlendState(
+				NULL,
+				factors,
+				0xFFFFFFFF);
+		}
 
 		reflectionShader->SetShaderResourceView("skyTexture", skySRV);
 		waterCubeGameObject->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
@@ -711,6 +724,8 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 
 		_skybox->skyBox->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 		_skybox->Draw(deviceContext);
+
+		ImGui::Render();
 
 		deviceContext->RSSetState(0);
 		deviceContext->OMSetDepthStencilState(0, 0);
@@ -835,13 +850,16 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 			D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 			1.0f,
 			0);
-		// Turn Off the blend state
 
+		// Turn Off the blend state
 		float factors[4] = { 1,1,1,1 };
-		deviceContext->OMSetBlendState(
-			blendState,
-			factors,
-			0xFFFFFFFF);
+		if (isBlend)
+		{
+			deviceContext->OMSetBlendState(
+				NULL,
+				factors,
+				0xFFFFFFFF);
+		}
 
 
 		pixelShader->SetFloat3("cameraPosition", myCamera->camPosition);
@@ -873,18 +891,24 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 
 		pixelShader->SetShaderResourceView("shadowMap", 0);
 
-		deviceContext->OMSetBlendState(
-			blendState,
-			factors,
-			0xFFFFFFFF);
+		if (isBlend)
+		{
+			deviceContext->OMSetBlendState(
+				blendState,
+				factors,
+				0xFFFFFFFF);
+		}
 
 		helixGameObject->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 		helixGameObject->Draw(deviceContext);
 
-		deviceContext->OMSetBlendState(
-			NULL,
-			factors,
-			0xFFFFFFFF);
+		if(isBlend)
+		{
+			deviceContext->OMSetBlendState(
+				NULL,
+				factors,
+				0xFFFFFFFF);
+		}
 
 		reflectionShader->SetShaderResourceView("skyTexture", skySRV);
 		waterCubeGameObject->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
@@ -893,10 +917,9 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		_skybox->skyBox->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 		_skybox->Draw(deviceContext);
 
-		
+		ImGui::Render();
 		
 	}
-	ImGui::Render();
 
 	deviceContext->RSSetState(0);
 	deviceContext->OMSetDepthStencilState(0, 0);

@@ -169,4 +169,5 @@ private:
 	 float b = 0.0f;
 
 	 bool isBloom = false;
+	 bool isBlend = false;
 };
