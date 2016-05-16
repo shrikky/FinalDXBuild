@@ -8,6 +8,10 @@
 #include "Material.h"
 #include "imgui_impl_dx11.h"
 
+//bullet physics
+#include "btBulletDynamicsCommon.h"
+#include"Physics.h"
+
 using namespace DirectX;
 class GameObject
 {
@@ -19,6 +23,27 @@ public:
 	XMFLOAT3 scale;
 	Mesh* gameObjectMesh;
 	Material* gameObjectmaterial;
+
+/*-------------------physics stuff---------------------*/
+public:
+	//create a dynamic rigidbody
+	btAlignedObjectArray<btCollisionShape*> collisionShapes;
+	btCollisionShape* colShape;
+	// Create Dynamic Objects
+	btTransform  startTransform;
+	float mass;
+	btVector3 localInertia;
+	btDefaultMotionState* myMotionState;
+	btRigidBody* body;
+	btBoxShape * mPlayerBox;
+	btCollisionObject * mPlayerObject;
+
+	void InitializeRigidBody();
+	void SetMass(float newmass);
+	void SetDefaultMass();
+	void CleanupPhysicsObjects();
+	void SetRigidBodyShape(float scalex, float scaley, float scalez);
+/*----------------------physics end----------------------*/
 	XMFLOAT4X4 GetWorldMatrix() {
 		return worldMatrix;
 	}
@@ -53,12 +78,22 @@ public:
 		SetWorldMatrix();
 	}
 
-	void SetPosition(XMFLOAT3 pos) {
+	void SetPosition(XMFLOAT3 pos) 
+	{
 		position = pos;
 		SetWorldMatrix();
 	}
-	void SetRotation(XMFLOAT3 rot) {
+	void SetRotation(XMFLOAT3 rot)
+	{
 		rotation = rot;
+		SetWorldMatrix();
+	}
+
+	void SetRotation(float x, float y, float z)
+	{
+		rotation.x = x;
+		rotation.y = y;
+		rotation.z = z;
 		SetWorldMatrix();
 	}
 

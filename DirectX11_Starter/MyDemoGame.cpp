@@ -152,8 +152,11 @@ MyDemoGame::~MyDemoGame()
 // sets up our geometry and loads the shaders (among other things)
 // --------------------------------------------------------
 bool MyDemoGame::Init()
-{	// Camera
+{	
+	//load physics world
+	LoadDynamicsWorld();
 
+	// Camera
 	myCamera = new Camera();
 	// Call the base class's Init() method to create the window,
 	// initialize DirectX, etc.
@@ -162,7 +165,7 @@ bool MyDemoGame::Init()
 
 	// Helper methods to create something to draw, load shaders to draw it 
 	// with and set up matrices so we can see how to pass data to the GPU.
-	//  - For your own projects, feel free to expand/replace these.
+	//  - For your own projects, feel free to expand/replace these.	
 	LoadShaders(); 
 	CreateGeometry();
 	CreateMatrices();
@@ -219,7 +222,6 @@ bool MyDemoGame::Init()
 	helixGameObject = new GameObject(_helix, _helixMaterial);
 
 
-
 	cube->SetXPosition(-2);
 	helixGameObject->SetXPosition(2);
 	waterCubeGameObject->SetPosition(XMFLOAT3(0.0f, -4.99f, 7.0f));
@@ -228,6 +230,21 @@ bool MyDemoGame::Init()
 
 	skyBoxCube = new GameObject(sbCube, skyBoxMaterial);
 	_skybox = new SkyBox(skyBoxCube);
+	
+	//Initialize physics game objects
+	// for a physics demo
+	for (int i = 0; i < 50;i++)
+	{
+		GameObject* g = new GameObject(_cube2, _NormalMapMat);
+		g->SetDefaultMass();
+		g->InitializeRigidBody();
+		g->body->activate(true);
+		g->SetPosition(XMFLOAT3(0.1+i*4, 0.1+i*4, 0.1+i*4));
+		physicsGameObjects.push_back(g);
+		physics->dynamicsWorld->addRigidBody(g->body);
+		physics->dynamicsWorld->addCollisionObject(g->mPlayerObject);
+	}
+
 	//  Initialize Lights
 
 	//Directional Light 
@@ -549,6 +566,10 @@ float x = 0;
 void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 {
 	GetCursorPos(&p);
+
+	//update physics
+	UpdatePhysicsWorld(static_cast<btScalar>(totalTime));
+	
 	if (btnState & 0x0001) {
 		OnMouseDown(btnState, p.x, p.y);
 
@@ -579,6 +600,21 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 	}
 	if (GetAsyncKeyState('A') & 0x8000) {
 		myCamera->Strafe(-10.0f*deltaTime);
+	}
+	if (GetAsyncKeyState('K') & 0x8000) {
+		physicsGameObjects.at(0)->body->applyCentralImpulse(btVector3(1.0f, 0.0f, 0.f));
+	}
+
+	if (GetAsyncKeyState('J') & 0x8000) {
+		physicsGameObjects.at(0)->body->applyCentralImpulse(btVector3(-1.0f, 0.0f, 0.f));
+	}
+
+	if (GetAsyncKeyState('I') & 0x8000) {
+		physicsGameObjects.at(0)->body->applyCentralImpulse(btVector3(0.0f, 0.0f, 1.0f));
+	}
+
+	if (GetAsyncKeyState('M') & 0x8000) {
+		physicsGameObjects.at(0)->body->applyCentralImpulse(btVector3(0.0f, 0.0f, -1.0f));
 	}
 	
 	//std::vector<GameObject*>::iterator it;
@@ -677,10 +713,9 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 			(*it)->Draw(deviceContext);
 		}*/
 		std::vector<GameObject*>::iterator it;
-		int temp = 0;
 		for (it = gameObjects.begin(); it != gameObjects.end(); ++it) {
-			GameObject* ge = gameObjects.at(temp);
-			vertexShader->SetMatrix4x4("world", ge->GetWorldMatrix());
+			//GameObject* ge = gameObjects.at(temp);
+			vertexShader->SetMatrix4x4("world", (*it)->GetWorldMatrix());
 			vertexShader->SetMatrix4x4("view", myCamera->GetviewMatrix());
 			vertexShader->SetMatrix4x4("projection", myCamera->GetProjectionMatrix());
 			vertexShader->SetMatrix4x4("shadowView", shadowView);
@@ -690,7 +725,20 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 
 			(*it)->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 			(*it)->Draw(deviceContext);
-			temp++;
+		}
+
+		for (it = physicsGameObjects.begin(); it != physicsGameObjects.end(); ++it) 
+		{
+			vertexShader->SetMatrix4x4("world", (*it)->GetWorldMatrix());
+			vertexShader->SetMatrix4x4("view", myCamera->GetviewMatrix());
+			vertexShader->SetMatrix4x4("projection", myCamera->GetProjectionMatrix());
+			vertexShader->SetMatrix4x4("shadowView", shadowView);
+			vertexShader->SetMatrix4x4("shadowProjection", shadowProj);
+			normalMappingPS->SetShaderResourceView("shadowMap", shadowSRV);
+			normalMappingPS->SetSamplerState("shadowSampler", shadowSampler);
+
+			(*it)->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
+			(*it)->Draw(deviceContext);
 		}
 
 
@@ -887,7 +935,19 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 			temp++;
 		}
 
+		for (it = physicsGameObjects.begin(); it != physicsGameObjects.end(); ++it)
+		{
+			vertexShader->SetMatrix4x4("world", (*it)->GetWorldMatrix());
+			vertexShader->SetMatrix4x4("view", myCamera->GetviewMatrix());
+			vertexShader->SetMatrix4x4("projection", myCamera->GetProjectionMatrix());
+			vertexShader->SetMatrix4x4("shadowView", shadowView);
+			vertexShader->SetMatrix4x4("shadowProjection", shadowProj);
+			normalMappingPS->SetShaderResourceView("shadowMap", shadowSRV);
+			normalMappingPS->SetSamplerState("shadowSampler", shadowSampler);
 
+			(*it)->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
+			(*it)->Draw(deviceContext);
+		}
 
 		pixelShader->SetShaderResourceView("shadowMap", 0);
 
@@ -976,6 +1036,25 @@ void MyDemoGame::RenderShadowMap()
 		temp++;
 		
 	}
+	//render shadow map for physics objects
+	for (it = physicsGameObjects.begin(); it != physicsGameObjects.end(); ++it) {
+
+		ID3D11Buffer* vb = (*it)->getMesh()->GetVertexBuffer();
+		ID3D11Buffer* ib = (*it)->getMesh()->GetIndexBuffer();
+
+		// Set buffers in the input assembler
+		deviceContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
+		deviceContext->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
+
+		shadowVS->SetMatrix4x4("world", (*it)->GetWorldMatrix());
+
+		// Actually copy the data for this object
+		shadowVS->CopyAllBufferData();
+
+		// Finally do the actual drawing
+		deviceContext->DrawIndexed((*it)->getMesh()->GetIndexCount(), 0, 0);
+	}
+
 	// Revert to original DX state
 	deviceContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 	deviceContext->RSSetViewports(1, &viewport);
@@ -1037,6 +1116,32 @@ void MyDemoGame::OnMouseMove(WPARAM btnState, int x, int y)
 		myCamera->MouseMovement(diffY * 0.001f, diffX* 0.001f);
 		prevMousePos.x = x;
 		prevMousePos.y = y;
+	}
+}
+
+//Update physics world in regular intervals
+void MyDemoGame::UpdatePhysicsWorld(float elapsedTime)
+{
+	// fixed 1/60 timestep
+	physics->dynamicsWorld->stepSimulation(1 / 10.0f, 1);
+
+	XMFLOAT3 mat;
+	const btCollisionObjectArray& objectArray = physics->dynamicsWorld->getCollisionObjectArray();
+
+	for (int i = 0; i < physicsGameObjects.size(); i++)
+	{
+		physicsGameObjects.at(i)->body->activate(true);
+
+		btRigidBody* pBody = physicsGameObjects.at(i)->body;
+		if (pBody && pBody->getMotionState())
+		{
+			btTransform trans = physicsGameObjects.at(i)->startTransform;
+			pBody->getMotionState()->getWorldTransform(trans);
+			XMFLOAT3 pos = XMFLOAT3(trans.getOrigin());
+			physicsGameObjects.at(i)->SetPosition(pos);
+			physicsGameObjects.at(i)->SetRotation(trans.getRotation().getX(), trans.getRotation().getY(), trans.getRotation().getZ());
+			physicsGameObjects.at(i)->SetWorldMatrix();
+		}
 	}
 }
 #pragma endregion

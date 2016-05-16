@@ -1,7 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectX11_Starter", "DirectX11_Starter\DirectX11_Starter.vcxproj", "{FEB50FC0-912F-45AC-B79A-03B08704F107}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BulletDynamics", "Bullet_Physics\build3\vs2010\BulletDynamics.vcxproj", "{5E4A6AE7-0383-8547-8A9E-7C8D2E2B4B71}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BulletCollision", "Bullet_Physics\build3\vs2010\BulletCollision.vcxproj", "{803AE98A-7630-F845-8E02-90609ACC9B79}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LinearMath", "Bullet_Physics\build3\vs2010\LinearMath.vcxproj", "{609AB04F-A004-FC48-9F9B-2145668A626F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,6 +25,30 @@ Global
 		{FEB50FC0-912F-45AC-B79A-03B08704F107}.Release|Win32.ActiveCfg = Release|Win32
 		{FEB50FC0-912F-45AC-B79A-03B08704F107}.Release|Win32.Build.0 = Release|Win32
 		{FEB50FC0-912F-45AC-B79A-03B08704F107}.Release|x64.ActiveCfg = Release|Win32
+		{5E4A6AE7-0383-8547-8A9E-7C8D2E2B4B71}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5E4A6AE7-0383-8547-8A9E-7C8D2E2B4B71}.Debug|Win32.Build.0 = Debug|Win32
+		{5E4A6AE7-0383-8547-8A9E-7C8D2E2B4B71}.Debug|x64.ActiveCfg = Debug|x64
+		{5E4A6AE7-0383-8547-8A9E-7C8D2E2B4B71}.Debug|x64.Build.0 = Debug|x64
+		{5E4A6AE7-0383-8547-8A9E-7C8D2E2B4B71}.Release|Win32.ActiveCfg = Release|Win32
+		{5E4A6AE7-0383-8547-8A9E-7C8D2E2B4B71}.Release|Win32.Build.0 = Release|Win32
+		{5E4A6AE7-0383-8547-8A9E-7C8D2E2B4B71}.Release|x64.ActiveCfg = Release|x64
+		{5E4A6AE7-0383-8547-8A9E-7C8D2E2B4B71}.Release|x64.Build.0 = Release|x64
+		{803AE98A-7630-F845-8E02-90609ACC9B79}.Debug|Win32.ActiveCfg = Debug|Win32
+		{803AE98A-7630-F845-8E02-90609ACC9B79}.Debug|Win32.Build.0 = Debug|Win32
+		{803AE98A-7630-F845-8E02-90609ACC9B79}.Debug|x64.ActiveCfg = Debug|x64
+		{803AE98A-7630-F845-8E02-90609ACC9B79}.Debug|x64.Build.0 = Debug|x64
+		{803AE98A-7630-F845-8E02-90609ACC9B79}.Release|Win32.ActiveCfg = Release|Win32
+		{803AE98A-7630-F845-8E02-90609ACC9B79}.Release|Win32.Build.0 = Release|Win32
+		{803AE98A-7630-F845-8E02-90609ACC9B79}.Release|x64.ActiveCfg = Release|x64
+		{803AE98A-7630-F845-8E02-90609ACC9B79}.Release|x64.Build.0 = Release|x64
+		{609AB04F-A004-FC48-9F9B-2145668A626F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{609AB04F-A004-FC48-9F9B-2145668A626F}.Debug|Win32.Build.0 = Debug|Win32
+		{609AB04F-A004-FC48-9F9B-2145668A626F}.Debug|x64.ActiveCfg = Debug|x64
+		{609AB04F-A004-FC48-9F9B-2145668A626F}.Debug|x64.Build.0 = Debug|x64
+		{609AB04F-A004-FC48-9F9B-2145668A626F}.Release|Win32.ActiveCfg = Release|Win32
+		{609AB04F-A004-FC48-9F9B-2145668A626F}.Release|Win32.Build.0 = Release|Win32
+		{609AB04F-A004-FC48-9F9B-2145668A626F}.Release|x64.ActiveCfg = Release|x64
+		{609AB04F-A004-FC48-9F9B-2145668A626F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -68,3 +68,61 @@ void GameObject::PrepareMaterial(XMFLOAT4X4 view, XMFLOAT4X4 proj) {
 void GameObject::MoveForward() {
 
 }
+
+void GameObject::InitializeRigidBody()
+{
+	//create a dynamic rigidbody
+
+	//colShape = new btSphereShape(btScalar(0.05));
+
+	mPlayerObject = new btCollisionObject();
+	mPlayerObject->setCollisionShape(mPlayerBox);
+	collisionShapes.push_back(mPlayerBox);
+
+	// Create Dynamic Objects
+	startTransform.setIdentity();
+
+	mass = 1.0f;
+
+	localInertia = btVector3(0, 0, 0);
+	mPlayerBox->calculateLocalInertia(mass, localInertia);
+
+	startTransform.setOrigin(btVector3(position.x, position.y, position.z));
+
+	//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+	myMotionState = new btDefaultMotionState(startTransform);
+	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, mPlayerBox, localInertia);
+	body = new btRigidBody(rbInfo);
+
+	mPlayerObject->setWorldTransform(startTransform);
+}
+
+void GameObject::SetMass(float newmass) 
+{
+	mass = newmass;
+	CleanupPhysicsObjects();
+	InitializeRigidBody();
+}
+
+void GameObject::SetDefaultMass() 
+{
+
+	mass = 1.0f;
+	mPlayerBox = new btBoxShape(btVector3(0.25, 0.25, 0.25));
+
+}
+
+void GameObject::CleanupPhysicsObjects() 
+{
+	//delete body;
+	//delete myMotionState;
+	//delete mPlayerObject;
+	//delete mPlayerBox;
+}
+
+void GameObject::SetRigidBodyShape(float scalex, float scaley, float scalez) 
+{
+	mPlayerBox = new btBoxShape(btVector3(scalex, scaley, scalez));
+	CleanupPhysicsObjects();
+	InitializeRigidBody();
+}

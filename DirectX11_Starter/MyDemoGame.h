@@ -96,6 +96,7 @@ private:
 	std::vector<Mesh*> meshes;
 	// GameObjects
 	std::vector<GameObject*> gameObjects;
+	std::vector<GameObject*> physicsGameObjects;
 	GameObject* helixGameObject;
 	GameObject* skyBoxCube;
 	GameObject* waterCubeGameObject;
@@ -170,4 +171,12 @@ private:
 
 	 bool isBloom = false;
 	 bool isBlend = false;
+
+	 /*physics stuff*/
+	Physics* physics;
+	void MyDemoGame::LoadDynamicsWorld()
+	{
+		physics = new Physics();
+	}
+	void UpdatePhysicsWorld(float elapsedTime);
 };
