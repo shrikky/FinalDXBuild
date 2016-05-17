@@ -41,6 +41,7 @@ public:
 	void OnMouseUp(WPARAM btnState, int x, int y);
 	void OnMouseMove(WPARAM btnState, int x, int y);
 
+
 private:
 	// Initialization for our "game" demo - Feel free to
 	// expand, alter, rename or remove these once you
@@ -53,6 +54,9 @@ private:
 
 	//Shadows
 	void RenderShadowMap();
+
+
+	void CreateSceneObjects();
 
 	int shadowMapSize;
 	ID3D11DepthStencilView* shadowDSV;
@@ -135,6 +139,7 @@ private:
 
 	//Materials
 	Material* _helixMaterial;
+	Material* _floorMat;
 	Material* _NormalMapMat;
 	Material* skyBoxMaterial;
 	Material* _waterCubeMaterial;

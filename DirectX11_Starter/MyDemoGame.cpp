@@ -182,11 +182,11 @@ bool MyDemoGame::Init()
 	// Create Material -> Params (Vertexshader, Pixel shader)
 
 	_helixMaterial = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &helixTexSRV, L"bricks2.jpg"); //if I can find 3 textures of differing qualities
-																																									 //they should be put into materials
+	_floorMat = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &helixTexSRV, L"box.jpg");																																								 //they should be put into materials
 	
 	//_waterCubeMaterial = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg");
 	_waterCubeMaterial = new Material(&vertexShader, &reflectionShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg", &nMapSRV, L"waternormal1.png");
-
+	CreateSceneObjects();
 	srvContainer.push_back(texSRV);
 	srvContainer.push_back(nMapSRV);
 	srvContainer.push_back(dMapSRV);
@@ -203,18 +203,18 @@ bool MyDemoGame::Init()
 	GameObject* cube2 = new GameObject(_cube2, _NormalMapMat);
 	gameObjects.push_back(cube2);
 
-	GameObject* cube3 = new GameObject(_cube, _helixMaterial);
+	GameObject* cube3 = new GameObject(_cube, _floorMat);
 	gameObjects.push_back(cube3);
-	cube3->SetScale(XMFLOAT3(20, 1, 20));
-	cube3->SetYPosition(-3);
+	cube3->SetScale(XMFLOAT3(200, 1, 200));
+	cube3->SetYPosition(-5);
 
-	GameObject* building = new GameObject(_cube, _NormalMapMat);
+	/*GameObject* building = new GameObject(_cube, _NormalMapMat);
 	gameObjects.push_back(building);
 	building->SetScale(XMFLOAT3(10, 20, 10));
 	building->SetYPosition(3);
 	building->SetZPosition(30);
 	building->SetRotation(XMFLOAT3(0, 0, 1.57f));
-
+*/
 	//water object
 	waterCubeGameObject = new GameObject(_waterCube, _waterCubeMaterial);
 
@@ -230,6 +230,7 @@ bool MyDemoGame::Init()
 
 	skyBoxCube = new GameObject(sbCube, skyBoxMaterial);
 	_skybox = new SkyBox(skyBoxCube);
+	
 	
 	//Initialize physics game objects
 	// for a physics demo
@@ -617,11 +618,16 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 		physicsGameObjects.at(0)->body->applyCentralImpulse(btVector3(0.0f, 0.0f, -1.0f));
 	}
 	
-	//std::vector<GameObject*>::iterator it;
-	//for (it = gameObjects.begin(); it != gameObjects.end(); ++it)
-	//{
-	//	(*it)->SetRotation(XMFLOAT3(totalTime, totalTime, totalTime));
-	//}
+	std::vector<GameObject*>::iterator it;
+	int temp = 0;
+	for (it = gameObjects.begin(); it != gameObjects.end(); ++it)
+	{
+		GameObject* ge = gameObjects.at(temp);
+		if (ge->GetTag() == 't') {
+			(*it)->SetRotation(XMFLOAT3(totalTime, totalTime, totalTime));
+		}
+		temp++;
+	}
 
 	myCamera->Update();
 	viewMatrix = myCamera->GetviewMatrix();
@@ -1059,6 +1065,32 @@ void MyDemoGame::RenderShadowMap()
 	deviceContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 	deviceContext->RSSetViewports(1, &viewport);
 	deviceContext->RSSetState(0);
+}
+
+void MyDemoGame::CreateSceneObjects()
+{
+	//Create all the Game or Test geometry
+	//float x = 0, y = 0, z = 0; //x is across, y is up, z is back
+
+	
+
+	for (float x= 0; x < 10; x++) {
+		for (float y = 0; y < 10; y++) {
+			for (float z = 0; z < 10; z++) {
+
+				GameObject* building = new GameObject(_cube, _NormalMapMat);
+				gameObjects.push_back(building);
+				building->SetPosition(XMFLOAT3(x*x, y*y, z*z));
+				building->SetTag('t');
+
+
+			}
+
+
+		}
+
+
+	}
 }
 
 

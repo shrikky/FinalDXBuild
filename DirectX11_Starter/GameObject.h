@@ -16,6 +16,7 @@ using namespace DirectX;
 class GameObject
 {
 public:
+	char tag;
 	XMFLOAT4X4 worldMatrix;
 	XMFLOAT4X4 modelMatrix;
 	XMFLOAT3 position;
@@ -51,6 +52,13 @@ public:
 		return gameObjectMesh;
 
 
+	}
+	char GetTag() {
+
+		return tag;
+	}
+	void SetTag(char t) {
+		tag = t;
 	}
 	XMFLOAT3 GetPosition() {
 		return position;
