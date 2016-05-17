@@ -219,7 +219,7 @@ bool MyDemoGame::Init()
 	
 	//Initialize physics game objects
 	// for a physics demo
-	for (int i = 0; i < 50;i++)
+	for (int i = 0; i < 100;i++)
 	{
 		GameObject* g = new GameObject(_cube2, _NormalMapMat);
 		g->SetDefaultMass();
