@@ -52,7 +52,7 @@ MyDemoGame::MyDemoGame(HINSTANCE hInstance)
 	// Custom window size - will be created by Init() later
 	windowWidth = 1280;
 	windowHeight = 720;
-	shadowMapSize = 2048; // bigger shadow map
+	shadowMapSize = 16384; // bigger shadow map
 }
 
 // --------------------------------------------------------
@@ -167,7 +167,7 @@ bool MyDemoGame::Init()
 	// Create Material -> Params (Vertexshader, Pixel shader)
 
 	_helixMaterial = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &helixTexSRV, L"bricks2.jpg"); //if I can find 3 textures of differing qualities
-	_floorMat = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &helixTexSRV, L"box.jpg");																																								 //they should be put into materials
+	_floorMat = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &helixTexSRV, L"sphere.jpg");																																								 //they should be put into materials
 	
 	//_waterCubeMaterial = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg");
 	_waterCubeMaterial = new Material(&vertexShader, &reflectionShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg", &nMapSRV, L"waternormal1.png");
@@ -209,7 +209,7 @@ bool MyDemoGame::Init()
 
 	cube->SetXPosition(-2);
 	helixGameObject->SetXPosition(2);
-	waterCubeGameObject->SetPosition(XMFLOAT3(0.0f, -4.99f, 7.0f));
+	waterCubeGameObject->SetPosition(XMFLOAT3(0.0f, -6.99f, 20.0f));
 	waterCubeGameObject->SetScale(XMFLOAT3(5.0f,5.0f,5.0f));
 
 
@@ -219,7 +219,7 @@ bool MyDemoGame::Init()
 	
 	//Initialize physics game objects
 	// for a physics demo
-	for (int i = 0; i < 100;i++)
+	for (int i = 0; i < 10;i++)
 	{
 		GameObject* g = new GameObject(_cube2, _NormalMapMat);
 		g->SetDefaultMass();
@@ -234,7 +234,7 @@ bool MyDemoGame::Init()
 	//  Initialize Lights
 
 	//Directional Light 
-	directionLight.AmbientColor = XMFLOAT4(0.4f, 0.4f, 0.4f, 0.0);
+	directionLight.AmbientColor = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0);
 	directionLight.DiffuseColor = XMFLOAT4(0, 0, 0, 0);
 	directionLight.Direction = XMFLOAT3(0, 0, -1);
 
@@ -459,7 +459,7 @@ void MyDemoGame::LoadShaders()
 		2,								// Particle lifetime
 		1.0f,							// Start size
 		0.3f,							// End size
-		XMFLOAT4(1, 0.1f, 0.1f, 0.2f),	// Start color
+		XMFLOAT4(0, 1, 0.1f, 0.2f),	// Start color
 		XMFLOAT4(1, 0.6f, 0.1f, 0),		// End color
 		XMFLOAT3(-0.1, 0.1, 0),				// Start velocity
 		XMFLOAT3(0, 1, 0),				// Start position
@@ -583,10 +583,10 @@ void MyDemoGame::CreateMatrices()
 	XMStoreFloat4x4(&shadowView, XMMatrixTranspose(shView));
 
 	XMMATRIX shProj = XMMatrixOrthographicLH(
-		10.0f,		// Width in world units
-		10.0f,		// Height in world units
+		1000.0f,		// Width in world units
+		1000.0f,		// Height in world units
 		0.1f,		// Near plane distance
-		100.0f);	// Far plane distance
+		10000.0f);	// Far plane distance
 
 	XMStoreFloat4x4(&shadowProj, XMMatrixTranspose(shProj));
 	myCamera->OnResize(aspectRatio);
@@ -622,7 +622,7 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 	UpdatePhysicsWorld(static_cast<btScalar>(totalTime));
 
 	fireEmitter->Update(deltaTime);
-	
+	explosiveEmitter->Update(deltaTime);
 	if (btnState & 0x0001) {
 		OnMouseDown(btnState, p.x, p.y);
 
@@ -1156,25 +1156,16 @@ void MyDemoGame::CreateSceneObjects()
 {
 	//Create all the Game or Test geometry
 	//float x = 0, y = 0, z = 0; //x is across, y is up, z is back
-
-	
-
-	for (float x= 0; x < 10; x++) {
-		for (float y = 0; y < 10; y++) {
-			for (float z = 0; z < 10; z++) {
+	for (float x= 0; x < 5; x++) {
+		for (float y = 0; y < 5; y++) {
+			for (float z = 0; z < 5; z++) {
 
 				GameObject* building = new GameObject(_cube, _NormalMapMat);
 				gameObjects.push_back(building);
 				building->SetPosition(XMFLOAT3(x*x, y*y, z*z));
 				building->SetTag('t');
-
-
 			}
-
-
 		}
-
-
 	}
 }
 
