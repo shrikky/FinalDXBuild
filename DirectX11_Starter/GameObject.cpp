@@ -43,11 +43,12 @@ void GameObject::Draw(ID3D11DeviceContext* deviceContext) {
 }
 void GameObject::SetWorldMatrix() {
 	XMMATRIX trans = XMMatrixTranslation(position.x, position.y, position.z);
-	XMMATRIX rotY = XMMatrixRotationY(rotation.y);
+	/*XMMATRIX rotY = XMMatrixRotationY(rotation.y);
 	XMMATRIX rotX = XMMatrixRotationX(rotation.x);
-	XMMATRIX rotZ = XMMatrixRotationZ(rotation.z);
+	XMMATRIX rotZ = XMMatrixRotationZ(rotation.z);*/
+	XMMATRIX rot = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
 	XMMATRIX scaleMatrix = XMMatrixScaling(scale.x, scale.y, scale.z);
-	XMMATRIX model = scaleMatrix * rotZ * rotY * rotX * trans;
+	XMMATRIX model = scaleMatrix * rot * trans;
 	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(model));	//Setting matrix as transpose
 }
 void GameObject::Move() {
@@ -108,7 +109,7 @@ void GameObject::SetDefaultMass()
 {
 
 	mass = 1.0f;
-	mPlayerBox = new btBoxShape(btVector3(0.25, 0.25, 0.25));
+	mPlayerBox = new btBoxShape(btVector3(0.5, 0.5, 0.5));
 
 }
 

@@ -1,26 +1,3 @@
-// ----------------------------------------------------------------------------
-//  A few notes on project settings
-//
-//  - The project is set to use the UNICODE character set
-//    - This was changed in Project Properties > Config Properties > General > Character Set
-//    - This basically adds a "#define UNICODE" to the project
-//
-//  - The include directories were automagically correct, since the DirectX 
-//    headers and libs are part of the windows SDK
-//    - For instance, $(WindowsSDK_IncludePath) is set as a project include 
-//      path by default.  That's where the DirectX headers are located.
-//
-//  - Two libraries had to be manually added to the Linker Input Dependencies
-//    - d3d11.lib
-//    - d3dcompiler.lib
-//    - This was changed in Project Properties > Config Properties > Linker > Input > Additional Dependencies
-//
-//  - The Working Directory was changed to match the actual .exe's 
-//    output directory, since we need to load the compiled shader files at run time
-//    - This was changed in Project Properties > Config Properties > Debugging > Working Directory
-//
-// ----------------------------------------------------------------------------
-
 #include "MyDemoGame.h"
 #include "Vertex.h"
 #include <iostream>
@@ -114,11 +91,14 @@ MyDemoGame::~MyDemoGame()
 	bpRTV->Release();
 	brtpRTV->Release();
 	blendState->Release();
+	particleBlendState->Release();
+	particleDepthState->Release();
 
 	shadowDSV->Release();
 	shadowSRV->Release();
 	shadowRS->Release();
 	shadowSampler->Release();
+	particleTexSRV->Release();
 
 	ImGui_ImplDX11_Shutdown();
 	
@@ -127,9 +107,14 @@ MyDemoGame::~MyDemoGame()
 
 	delete helixGameObject;
 	delete waterCubeGameObject;
+	delete fireEmitter;
 
 	std::vector<GameObject*>::iterator it;
 	for (it = gameObjects.begin(); it != gameObjects.end(); ++it) {
+		delete (*it);
+	}
+
+	for (it = physicsGameObjects.begin(); it != physicsGameObjects.end(); ++it) {
 		delete (*it);
 	}
 
@@ -354,6 +339,14 @@ void MyDemoGame::LoadShaders()
 	shadowVS = new SimpleVertexShader(device, deviceContext);
 	shadowVS->LoadShaderFile(L"ShadowVS.cso");
 
+	particleVS = new SimpleVertexShader(device, deviceContext);
+	particleVS->LoadShaderFile(L"ParticleVS.cso");
+
+	particlePS = new SimplePixelShader(device, deviceContext);
+	particlePS->LoadShaderFile(L"ParticlePS.cso");
+
+	DirectX::CreateWICTextureFromFile(device, deviceContext, L"particle.jpg", 0, &particleTexSRV);
+
 	D3D11_SAMPLER_DESC samplerDesc = {};
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -434,6 +427,63 @@ void MyDemoGame::LoadShaders()
 	shRastDesc.DepthBiasClamp = 0.0f;
 	shRastDesc.SlopeScaledDepthBias = 1.0f;
 	device->CreateRasterizerState(&shRastDesc, &shadowRS);
+
+
+	//Particle depth state and blend state
+	// A depth state for the particles
+	dsDesc = {};
+	dsDesc.DepthEnable = true;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	device->CreateDepthStencilState(&dsDesc, &particleDepthState);
+
+
+	// Blend for particles
+	D3D11_BLEND_DESC blend = {};
+	blend.AlphaToCoverageEnable = false;
+	blend.IndependentBlendEnable = false;
+	blend.RenderTarget[0].BlendEnable = true;
+	blend.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	device->CreateBlendState(&blend, &particleBlendState);
+
+	/// Set up particles
+	fireEmitter = new Emitter(
+		1000,							// Max particles
+		100,							// Particles per second
+		2,								// Particle lifetime
+		1.0f,							// Start size
+		0.3f,							// End size
+		XMFLOAT4(1, 0.1f, 0.1f, 0.2f),	// Start color
+		XMFLOAT4(1, 0.6f, 0.1f, 0),		// End color
+		XMFLOAT3(-0.1, 0.1, 0),				// Start velocity
+		XMFLOAT3(0, 1, 0),				// Start position
+		XMFLOAT3(0, 1, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		particleTexSRV);
+
+	explosiveEmitter = new Emitter(
+		1000,							// Max particles
+		100,							// Particles per second
+		2,								// Particle lifetime
+		1.0f,							// Start size
+		0.3f,							// End size
+		XMFLOAT4(1, 0.1f, 0.1f, 0.2f),	// Start color
+		XMFLOAT4(1, 0.6f, 0.1f, 0),		// End color
+		XMFLOAT3(-0.1, 0.1, 0),				// Start velocity
+		XMFLOAT3(2, 0, 3),				// Start position
+		XMFLOAT3(0, 1, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		particleTexSRV);
 
 
 	//main Tex render target
@@ -570,6 +620,8 @@ void MyDemoGame::UpdateScene(float deltaTime, float totalTime)
 
 	//update physics
 	UpdatePhysicsWorld(static_cast<btScalar>(totalTime));
+
+	fireEmitter->Update(deltaTime);
 	
 	if (btnState & 0x0001) {
 		OnMouseDown(btnState, p.x, p.y);
@@ -677,6 +729,8 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		isBloom ^= 1;
 	if (ImGui::Button("Toggle Blend"))
 		isBlend ^= 1;
+	if (ImGui::Button("Fire Particles"))
+		isParticle ^= 1;
 	ImGui::End();
 
 	if (isBloom)
@@ -983,12 +1037,43 @@ void MyDemoGame::DrawScene(float deltaTime, float totalTime)
 		_skybox->skyBox->PrepareMaterial(myCamera->GetviewMatrix(), myCamera->GetProjectionMatrix());
 		_skybox->Draw(deviceContext);
 
+		if (isParticle)
+		{
+			
+			// Reset rasterizer state
+			deviceContext->RSSetState(0);
+
+			deviceContext->OMSetBlendState(
+				blendState,
+				factors,
+				0xFFFFFFFF);
+
+
+
+			// Particle states
+			float blend[4] = { 1,1,1,1 };
+			deviceContext->OMSetBlendState(particleBlendState, blend, 0xffffffff);  // Additive blending
+			deviceContext->OMSetDepthStencilState(particleDepthState, 0);			// No depth WRITING
+
+																					// Draw the emitter
+			fireEmitter->Draw(deviceContext, myCamera);
+			explosiveEmitter->Draw(deviceContext, myCamera);
+
+			deviceContext->OMSetBlendState(
+				NULL,
+				factors,
+				0xFFFFFFFF);
+		}
+
+
+
 		ImGui::Render();
+		deviceContext->RSSetState(0);
+		deviceContext->OMSetDepthStencilState(0, 0);
 		
 	}
 
-	deviceContext->RSSetState(0);
-	deviceContext->OMSetDepthStencilState(0, 0);
+	
 	
 	HR(swapChain->Present(0, 0));
 }

@@ -14,6 +14,7 @@
 #include <d3d11.h>
 #include <vector>
 #include "SkyBox.h"
+#include"Emitter.h"
 // Include run-time memory checking in debug builds, so 
 // we can be notified of memory leaks
 #if defined(DEBUG) || defined(_DEBUG)
@@ -79,6 +80,8 @@ private:
 	SimplePixelShader* mergePS;
 	SimplePixelShader* brtPS;
 	SimplePixelShader* reflectionShader;
+	SimpleVertexShader* particleVS;
+	SimplePixelShader* particlePS;
 
 
 	// The matrices to go from model space to screen space
@@ -119,6 +122,7 @@ private:
 	ID3D11ShaderResourceView* bpSRV = 0;
 	ID3D11ShaderResourceView* brtSRV = 0;
 	ID3D11ShaderResourceView* waterTexSRV = 0;
+	ID3D11ShaderResourceView* particleTexSRV ;
 
 
 	//Textures
@@ -157,6 +161,11 @@ private:
 	D3D11_SHADER_RESOURCE_VIEW_DESC blursrvDesc;
 	D3D11_SHADER_RESOURCE_VIEW_DESC msrvDesc;
 
+	ID3D11DepthStencilState* particleDepthState;
+	ID3D11BlendState* particleBlendState;
+	Emitter* fireEmitter;
+	Emitter* explosiveEmitter;
+	
 
 	Camera* myCamera;
 	WPARAM btnState;
@@ -176,7 +185,7 @@ private:
 
 	 bool isBloom = false;
 	 bool isBlend = false;
-
+	 bool isParticle = false;
 	 /*physics stuff*/
 	Physics* physics;
 	void MyDemoGame::LoadDynamicsWorld()

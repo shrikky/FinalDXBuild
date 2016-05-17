@@ -44,8 +44,8 @@ float4 CalculateDirectionalLight(float3 normal, DirectionalLight light) {
 	float3 output;
 	normal = normalize(normal);
 	float NdotL = saturate(dot(normal, directionLight.Direction));
-	output = light.DiffuseColor * NdotL;
-	output += light.AmbientColor;
+	output = (light.DiffuseColor * NdotL).xyz;
+	output += light.AmbientColor.xyz;
 	return float4(output, 1);
 
 }
