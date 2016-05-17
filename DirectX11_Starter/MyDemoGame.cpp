@@ -1,26 +1,3 @@
-// ----------------------------------------------------------------------------
-//  A few notes on project settings
-//
-//  - The project is set to use the UNICODE character set
-//    - This was changed in Project Properties > Config Properties > General > Character Set
-//    - This basically adds a "#define UNICODE" to the project
-//
-//  - The include directories were automagically correct, since the DirectX 
-//    headers and libs are part of the windows SDK
-//    - For instance, $(WindowsSDK_IncludePath) is set as a project include 
-//      path by default.  That's where the DirectX headers are located.
-//
-//  - Two libraries had to be manually added to the Linker Input Dependencies
-//    - d3d11.lib
-//    - d3dcompiler.lib
-//    - This was changed in Project Properties > Config Properties > Linker > Input > Additional Dependencies
-//
-//  - The Working Directory was changed to match the actual .exe's 
-//    output directory, since we need to load the compiled shader files at run time
-//    - This was changed in Project Properties > Config Properties > Debugging > Working Directory
-//
-// ----------------------------------------------------------------------------
-
 #include "MyDemoGame.h"
 #include "Vertex.h"
 #include <iostream>
@@ -130,6 +107,10 @@ MyDemoGame::~MyDemoGame()
 
 	std::vector<GameObject*>::iterator it;
 	for (it = gameObjects.begin(); it != gameObjects.end(); ++it) {
+		delete (*it);
+	}
+
+	for (it = physicsGameObjects.begin(); it != physicsGameObjects.end(); ++it) {
 		delete (*it);
 	}
 
