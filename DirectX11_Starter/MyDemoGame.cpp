@@ -82,6 +82,8 @@ MyDemoGame::~MyDemoGame()
 	delete _NormalMapMat;
 	delete _helixMaterial;
 	delete _waterCubeMaterial;
+	delete terrainVS;
+	delete terrainPS;
 
 	delete myCamera;
 	samplerState->Release();
@@ -171,6 +173,9 @@ bool MyDemoGame::Init()
 	
 	//_waterCubeMaterial = new Material(&vertexShader, &pixelShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg");
 	_waterCubeMaterial = new Material(&vertexShader, &reflectionShader, &device, &deviceContext, &samplerState, &waterTexSRV, L"skyblue.jpg", &nMapSRV, L"waternormal1.png");
+
+	terrainMaterial = new Material(&vertexShader, &terrainPS, &device, &deviceContext, &samplerState, &terrainSRV, L"terraintexture.jpg");
+
 	CreateSceneObjects();
 	srvContainer.push_back(texSRV);
 	srvContainer.push_back(nMapSRV);
@@ -187,6 +192,9 @@ bool MyDemoGame::Init()
 	gameObjects.push_back(cube);
 	GameObject* cube2 = new GameObject(_cube2, _NormalMapMat);
 	gameObjects.push_back(cube2);
+
+	GameObject* terrainGameObject = new GameObject(_terrain, terrainMaterial);
+	gameObjects.push_back(terrainGameObject);
 
 	GameObject* cube3 = new GameObject(_cube, _floorMat);
 	gameObjects.push_back(cube3);
@@ -212,7 +220,7 @@ bool MyDemoGame::Init()
 	waterCubeGameObject->SetPosition(XMFLOAT3(0.0f, -6.99f, 20.0f));
 	waterCubeGameObject->SetScale(XMFLOAT3(5.0f,5.0f,5.0f));
 
-
+	terrainGameObject->SetPosition(XMFLOAT3(5.0, -4.6, 0.0f));
 	skyBoxCube = new GameObject(sbCube, skyBoxMaterial);
 	_skybox = new SkyBox(skyBoxCube);
 	
@@ -241,7 +249,7 @@ bool MyDemoGame::Init()
 	pixelShader->SetData("directionLight", &directionLight, sizeof(directionLight));
 	normalMappingPS->SetData("directionLight", &directionLight, sizeof(directionLight));
 	reflectionShader->SetData("directionLight", &directionLight, sizeof(directionLight));
-
+	terrainPS->SetData("directionLight", &directionLight, sizeof(directionLight));
 	
 	//Point Light
 	pointLight.PointLightColor = XMFLOAT4(0, 1, 0, 0);
@@ -250,6 +258,7 @@ bool MyDemoGame::Init()
 	pixelShader->SetData("pointLight", &pointLight, sizeof(pointLight));
 	normalMappingPS->SetData("pointLight", &pointLight, sizeof(pointLight));
 	reflectionShader->SetData("pointLight", &pointLight, sizeof(pointLight));
+	terrainPS->SetData("pointLight", &directionLight, sizeof(directionLight));
 
 
 	// Specular Light
@@ -323,6 +332,12 @@ void MyDemoGame::LoadShaders()
 
 	skyPS = new SimplePixelShader(device, deviceContext);
 	skyPS->LoadShaderFile(L"SkyPS.cso");
+
+	terrainVS = new SimpleVertexShader(device, deviceContext);
+	terrainVS->LoadShaderFile(L"TerrainVS.cso");
+
+	terrainPS = new SimplePixelShader(device, deviceContext);
+	terrainPS->LoadShaderFile(L"TerrainPS.cso");
 
 	ppVS = new SimpleVertexShader(device, deviceContext);
 	ppVS->LoadShaderFile(L"BlurVS.cso");
@@ -545,6 +560,9 @@ void MyDemoGame::CreateGeometry()
 	meshes.push_back(sbCube);
 	_waterCube = new Mesh(device, "cube.obj");
 	meshes.push_back(_waterCube);
+
+	_terrain = new Mesh(device, "../DirectX11_Starter/data/heightmap01.bmp",true);
+	meshes.push_back(_terrain);
 }
 
 

@@ -83,6 +83,9 @@ private:
 	SimpleVertexShader* particleVS;
 	SimplePixelShader* particlePS;
 
+	SimplePixelShader* terrainPS;
+	SimpleVertexShader* terrainVS;
+
 
 	// The matrices to go from model space to screen space
 	DirectX::XMFLOAT4X4 worldMatrix;
@@ -98,6 +101,7 @@ private:
 	Mesh* _cube;
 	Mesh* _cube2;
 	Mesh* _waterCube;
+	Mesh* _terrain;
 	Mesh* _helix;
 	Mesh* sbCube;
 	std::vector<Mesh*> meshes;
@@ -124,6 +128,8 @@ private:
 	ID3D11ShaderResourceView* waterTexSRV = 0;
 	ID3D11ShaderResourceView* particleTexSRV ;
 
+	ID3D11ShaderResourceView* terrainSRV = 0;
+
 
 	//Textures
 	ID3D11Texture2D* mTexture;
@@ -147,6 +153,7 @@ private:
 	Material* _NormalMapMat;
 	Material* skyBoxMaterial;
 	Material* _waterCubeMaterial;
+	Material* terrainMaterial;
 
 	//Descriptions
 	D3D11_TEXTURE2D_DESC mtDesc;

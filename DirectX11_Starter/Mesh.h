@@ -9,6 +9,10 @@ class Mesh
 {
 public:
 
+	const int TEXTURE_REPEAT = 8;
+	int m_TerrainClassWidth, m_TerrainClassHeight;
+	int m_vertexCount, m_indexCount;
+
 	// Buffer var
 	ID3D11Buffer* vBuffer;
 	ID3D11Buffer* iBuffer;
@@ -36,6 +40,7 @@ public:
 
 	Mesh(int vertNum, Vertex* vert, int indNum, unsigned int* indices, ID3D11Device* deviceObj);
 	Mesh( ID3D11Device* deviceObj, char* filename);
+	Mesh(ID3D11Device * deviceObj, char * heightMapFilename, bool isTerrain);
 	void CalculateTangents(Vertex* vert, int vertNum, unsigned int* indices, int indNum);
 	void MakePostProcessContent();
 	~Mesh();
